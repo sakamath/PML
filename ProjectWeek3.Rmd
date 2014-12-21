@@ -1,0 +1,130 @@
+---
+title: "Motor Trend Car Road Tests"
+author: "Sai"
+date: "Sunday, December 21, 2014"
+output: html_document
+---
+
+**Background**
+
+The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973-74 models).
+
+
+**Study**
+
+- "Is an automatic or manual transmission better for MPG?"
+- "Quantifying how different is the MPG between automatic and manual transmissions?"
+
+Load the data
+
+```{r}
+data(mtcars)
+```
+
+**Exploratory analysis**
+
+```{r, results="hide"}
+# See Appendix 1 for Sumary Results
+summary(mtcars)
+```
+
+
+```{r, results="hide"}
+#Convert to factor variables
+mtcars$cyl <- factor(mtcars$cyl)
+mtcars$vs <- factor(mtcars$vs)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+mtcars$am <- factor(mtcars$am,labels=c('Automatic','Manual'))
+
+# See Appendix 2 for Sumamry Results
+summary(mtcars)
+```
+
+**Regression model**
+
+```{r, results="hide"}
+allData <- lm(mpg ~ ., data = mtcars)
+optData <- step(allData, direction = "backward")
+#See Appendix 2 for results
+summary(optData)
+
+```
+
+This summary shows that the Optimum Model includes the 6 Cylinder, 8 Cylinder, HorsePower, Weight, and Transmission variables (overall p-value<0.001). The adjusted R-squared indicates that about 84% of the variance is explained by the final model. Moreover, the output of this model suggests that mpg decreases with respect to:
+
+- cylinders: -3.03 for 6 Cylinder and -2.16 for 8 Cylinder
+- HP (-0.03)
+- Weight for each tonne, by -2.5
+
+*However, the Miles per Gallon increases in a manual transmission vehicle by 1.8*
+
+Generating a Residual plot indicates that transformation becomes necessary for better linear slope.
+
+A sample Residual plot can be found in Appendix 4
+
+```{r}
+t.test(mpg ~ am, data = mtcars)
+```
+
+
+```{r, results="hide", fig.show="hide"}
+boxplot(mpg ~ am, data = mtcars, col = "lightblue", ylab = "MPG")
+
+```
+
+The boxplot in Appendix 3 showssignificant difference in Miles per Gallon which is also confirmed by the t-test.
+
+**Conclusion**
+
+*Is an automatic or manual transmission better for MPG?*
+
+The overall data does show that there is a distinct advantage in a Manual Transmission over Automatic Transmission as far as MPG is concerned. However, there are important limitations that need to be considered before coming to this conclusion. See the section "Limitations" below.
+
+*Quantifying how different is the MPG between automatic and manual transmissions?*
+
+The rate of change of the conditional mean MPG with respect to Transmission type is about 1.8. There is a 95% confidence interval that this value varies between -1.06 and 4.68
+
+**Limitations**
+
+- The data set contains too few observations.
+- Fuel Efficiency is also affected by the number of cylinders
+- Certain important measures like city driving or highway driving was not included in the observation
+
+**Appendix 1**
+
+```{r, echo=FALSE}
+summary(mtcars)
+```
+
+
+**Appendix 2**
+
+```{r, echo=FALSE}
+#Convert to factor variables
+mtcars$cyl <- factor(mtcars$cyl)
+mtcars$vs <- factor(mtcars$vs)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+mtcars$am <- factor(mtcars$am,labels=c('Automatic','Manual'))
+
+summary(mtcars)
+
+```
+
+
+
+**Appendix 3**
+
+```{r, echo=FALSE}
+boxplot(mpg ~ am, data = mtcars, col = "lightblue", ylab = "MPG")
+```
+
+
+**Appendix 4**
+
+```{r, echo=FALSE}
+par(mfrow=c(2, 2))
+plot(optData)
+```
+
