@@ -1,0 +1,80 @@
+---
+title: 'Practical Machine Learning Course Project : Learning Algortithm for Personal
+  Activiy Monitoring.'
+author: "Sai"
+date: "Sunday, December 21, 2014"
+output: html_document
+---
+
+
+## Summary
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <http://groupware.les.inf.puc-rio.br/har> (see the section on the Weight Lifting Exercise Dataset). 
+
+
+## Load and Clean Data
+
+```{r}
+library(caret)
+library(randomForest)
+library(doParallel)
+
+cl<-makeCluster(detectCores())
+registerDoParallel(cl)
+testBulk <- read.csv("pml-testing.csv",na.strings=c("NA",""))
+trainBulk <- read.csv("pml-training.csv",na.strings=c("NA",""))
+NAs <- apply(trainBulk,2,function(x) {sum(is.na(x))}) 
+cleanTrain <- trainBulk[,which(NAs == 0)]
+cleanTest <- testBulk[,which(NAs == 0)]
+
+```
+
+## Build Training and Testing Sets. 
+Around 75% of the data is used for the training and 25% for Cross Validation.
+```{r}
+trainIndex <- createDataPartition(y = cleanTrain$classe, p=0.75,list=FALSE)
+trainSet <- cleanTrain[trainIndex,]
+crossValidationSet <- cleanTrain[-trainIndex,]
+# Removing variables that have time, or names in it, also new_window. Columns 1..6
+removeIndex <- as.integer(c(1,2,3,4,5,6))
+trainSet <- trainSet[,-removeIndex]
+testSet <- cleanTest[,-removeIndex]
+```
+
+## Training Set
+```{r}
+mytrControl = trainControl(method = "cv", number = 4)
+modelFit <- train(trainSet$classe ~.,data = trainSet, method="rf", trControl = mytrControl)
+modelFit
+```
+
+
+## Testing Set
+```{r}
+predicted <- predict(modelFit, crossValidationSet)
+SampleError <- sum(predicted == crossValidationSet$classe)/nrow(crossValidationSet)
+```
+Out of Sample Error: `r SampleError`
+
+
+## Test on new data
+```{r}
+answers <-predict(modelFit, testSet)
+length(answers)
+```
+
+
+```{r}
+pml_write_files = function(answers){
+  n = length(answers)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(answers[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+```
+
+
+```{r}
+pml_write_files(answers)
+```
